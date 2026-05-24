@@ -1,88 +1,106 @@
-# Mother's Day Challenge Passport — iOS
+# Passport — iOS
 
-SwiftUI client for a location-verified, multi-venue "passport" event.
-Customers register on first launch, then visit a set of bar/restaurant
-venues across the country on challenge day and collect a stamp at each
-one by scanning the venue's QR and proving (via CoreLocation + a server-
-side geofence) that their phone is physically inside.
+iOS client for the Mother's Ruin Mother's Day Challenge — a location-verified bar-crawl passport across the five Mother's Ruin venues. Pairs with the `mothers/passport` Node/Fastify backend. POC built to pitch the May 9, 2027 challenge.
 
-**Status:** proof-of-concept built to pitch the Mother's Ruin team for
-the May 9 Mother's Day Challenge. Pairs with the `mothers/passport`
-Node/Fastify backend. Same xcodegen + SwiftUI conventions as the
-`validator/` app.
+## Flow
+
+1. **First launch** → register with name, email, and which venue you're at right now. Backend issues a `passportToken`, stored in `UserDefaults`.
+2. **Steady state** → passport view pulls `GET /passport/me/:token` and renders the 5-venue stamp grid. Charleston required, two more for the entry tier.
+3. **Check in** → tap a venue cell. App grabs a single CoreLocation fix, runs the client-side geofence gate (200m, see `Venues.swift`), and enqueues a check-in to `CheckinQueue`. The queue drains to `POST /passport/checkin` in the background and retries on network failure.
+4. **Claim** → once eligible, `ClaimCardView` posts to the wallet-card backend's `POST /signup/request` for an Add-to-Wallet link, then marks the passport complete server-side.
+
+## Verification model
+
+Two independent gates per check-in:
+
+1. **Passport token** — per-participant unguessable string issued at registration. Lives in `UserDefaults` on one device.
+2. **Geofence** — CoreLocation reports lat/lon; we verify the device is within 200m of the venue's anchor via Haversine (`CLLocation.distance`). The client gate is the bouncer — out-of-range submissions never hit the network. The server runs the same check and is the source of truth.
+
+The backend's `Venues` list and the client's `Venues.anchors` must stay in sync. Drift only changes what the server logs as `withinGeofence`; the gating decision happens on-device.
 
 ## Setup
+
+### Prerequisites
+- macOS with Xcode 15+
+- iOS 16+ device or simulator
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
+
+### Run it
 
 ```bash
 cd passport-ios
 
-# 1. Point Debug/Release builds at your backend.
-#    Edit Configuration/Debug.xcconfig   → API_BASE_URL, WALLET_API_BASE_URL
-#    Edit Configuration/Release.xcconfig → API_BASE_URL, WALLET_API_BASE_URL
+# Edit Configuration/Debug.xcconfig   (defaults to localhost:3001)
+# Edit Configuration/Release.xcconfig (placeholder host — replace before shipping)
 
-# 2. Generate the Xcode project.
-xcodegen          # produces Passport.xcodeproj from project.yml
+xcodegen
 open Passport.xcodeproj
 ```
 
-The xcconfig values land in Info.plist (`APIBaseURL`, `WalletAPIBaseURL`)
-and are read at runtime by `Config.swift`. To change a host, edit the
-xcconfig for that configuration and rebuild — no source changes.
+Hit ▶. First check-in prompts for location.
+
+### Configuration
+
+Backend hosts are read at runtime from `Info.plist` keys (`APIBaseURL`, `WalletAPIBaseURL`), populated at build time by the xcconfig for the active build configuration. To change a host, edit the xcconfig and rebuild — no source changes, no plist diff.
+
+Drop one of `Passport/SimulatorLocations/*.gpx` into the simulator's Debug → Location menu to test the geofence at each venue without leaving your desk.
+
+## Backend contract
+
+Mirrors `mothers/passport/src/routes/`:
+
+```
+POST /passport/register            { name, email, phone?, venueId, latitude, longitude }
+POST /passport/checkin             { passportToken, venueId, latitude, longitude }
+GET  /passport/me/:token           → { passport, stamps, eligibleTier }
+POST /passport/me/:token/start     marks the customer's day as started (idempotent)
+POST /passport/me/:token/checkout  records `checkedOutAt` for a venue
+POST /passport/me/:token/complete  closes out the passport with the awarded tier
+POST /passport/me/:token/flights   replaces the customer's flight itinerary
+POST /flights/search               proxy to the upstream flight-search service
+```
+
+`POST /signup/request` on the wallet backend is what `ClaimCardView` calls at claim time.
 
 ## Files
 
 ```
-project.yml                  xcodegen config; iOS 16+ target, camera + location permissions
+project.yml                  XcodeGen spec; iOS 16+, location permission
 Configuration/
   Debug.xcconfig             dev build URLs (localhost by default)
-  Release.xcconfig           production build URLs (placeholder)
+  Release.xcconfig           release build URLs (placeholder — replace before shipping)
 Passport/
   PassportApp.swift          @main entry
   ContentView.swift          routes between RegisterView and PassportView based on LocalStore
-  RegisterView.swift         name / email / phone / initial venue → POST /passport/register
-  PassportView.swift         5-venue stamp grid, tier eligibility, "Check in here" button
-  CheckinFlow.swift          full-screen modal: QR scan → CoreLocation fix → POST /passport/checkin
-  QRScannerView.swift        AVCaptureSession wrapper, accepts the venue's printed QR
+  RegisterView.swift         name / email / venue picker → POST /passport/register
+  PassportView.swift         5-venue stamp grid, tier eligibility, inline check-in
+  ClaimCardView.swift        Apple Wallet claim flow once eligible
+  ChallengeWindow.swift      challenge-date gating (pre/during/post)
+  ChallengeClosedView.swift  read-only summary once the day is over
+  EditCheckoutSheet.swift    manual edit of a previously-recorded checkout time
+  FlightsView.swift          itinerary list + add-flight search form
+  FlightsAPI.swift           client for the backend's flight-search proxy
+  FlightCountdownView.swift  next-flight countdown card on the passport
+  Flights.swift              local Flight model + request/response shapes
+  CheckinQueue.swift         offline buffer; drains check-ins / checkouts with retry
   LocationManager.swift      one-shot async/await wrapper over CLLocationManager
+  Venues.swift               anchor coords + 200m Haversine geofence (mirrors backend)
   APIClient.swift            URLSession + JSON to the passport backend
+  LocalStore.swift           UserDefaults wrapper (token, name, email, flights)
+  Config.swift               reads backend URLs from Info.plist
   Models.swift               VenueId, EligibleTier, request/response Codables
-  LocalStore.swift           UserDefaults wrapper (passport token + cached name/email)
-  Config.swift               reads backend base URLs from Info.plist (xcconfig-driven)
-  Info.plist                 NSCameraUsageDescription + NSLocationWhenInUseUsageDescription
-  Assets.xcassets/           empty asset catalog scaffold
+  SafariSheet.swift          in-app SFSafariViewController for the T&C link
+  Brand.swift                color palette
+  Info.plist                 NSLocationWhenInUseUsageDescription, ATS exception for localhost
+  Assets.xcassets/           app icon placeholder + brand logo
+  SimulatorLocations/        per-venue GPX files for Xcode's location simulator
 ```
 
-## Flows
-
-**First launch** → `RegisterView`. Captures name + email + which venue the customer is at right now, hits `POST /passport/register`, stores the returned `passportToken` in `UserDefaults`, drops into the passport.
-
-**Steady state** → `PassportView`. Pulls `/passport/me/<token>` on appear, renders the 5 venues as a stamp grid (Charleston flagged required), shows tier eligibility, exposes a "Check in here" button.
-
-**Check in** → `CheckinFlow` modal:
-1. **QR scan**. Accepts either `mrp:<venueId>:<token>` or a URL containing `/v/<venueId>?q=<token>` (matches the printed QR pattern the backend's `/v/:venueId` route expects).
-2. **Location fix** via `LocationManager.oneShot()`. Requests When-In-Use permission first time; one fresh sample.
-3. **POST `/passport/checkin`** with the QR token + reported lat/lon. Server runs the three-gate verification (passport token → QR secret → geofence) and returns the updated stamp list.
-4. Success view auto-dismisses after ~2.5s; passport refreshes.
-
-## Backend expectations
-
-Mirrors `mothers/passport/src/routes/`:
-
-- `POST /passport/register`  body `{ name, email, phone?, venueId }`
-- `POST /passport/checkin`   body `{ passportToken, venueId, venueQrToken, latitude, longitude }`
-- `GET  /passport/me/:token` returns participant + per-venue stamp status + eligible tier
-
-## Permissions
-
-- **Camera** — to scan venue QR codes.
-- **Location When-In-Use** — to verify the phone is at the venue at check-in.
-
-Both prompts live on the Info.plist with copy that explains the use case.
-
-## Known TODO
+## TODO before it's real
 
 - [ ] Settings screen with proper sign-out (today it's a dev "Sign out (testing)" link).
-- [ ] Better empty / error states once the registration backend rejects (e.g., the email is already in use).
-- [ ] Offline buffering — if a check-in fails because of network, queue and retry like the validator's `SyncEngine`.
+- [ ] Better empty / error states once registration rejects (e.g., email already in use).
+- [ ] QR scan flow — a per-venue printed QR with a secret token would add a third gate against someone driving past a venue with a spoofed location.
 - [ ] Universal Links so a printed QR opens directly into the check-in flow when the app is installed.
 - [ ] App icon + launch screen artwork.
+- [ ] Real T&C URL (placeholder points at `docusign.com`).
