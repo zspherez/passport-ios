@@ -1,16 +1,16 @@
 // Debug build settings for the Passport app.
 //
-// These values are substituted into Info.plist at build time and read
-// back at runtime from `Bundle.main` by `Config.swift`. Edit them to
-// point at wherever you're running the passport backend locally.
-//
-// The `$()` between `:` and `//` is intentional — xcconfig treats `//`
-// as a comment marker even inside values, so the empty variable
-// reference is the standard escape.
+// Values are substituted into Info.plist at build time and read back at
+// runtime from `Bundle.main` by `Config.swift`. We keep `scheme` and
+// `host` as separate build settings (rather than the full URL) so the
+// `//` in `https://` never appears inside an xcconfig value — xcconfig
+// treats `//` as a comment marker and there's no clean escape.
 
 // Passport backend (mothers/passport, run with `npm run dev`).
-API_BASE_URL = http:/$()/localhost:3001
+API_BASE_SCHEME = http
+API_BASE_HOST = localhost:3001
 
 // Wallet-card backend (mothers/backend). Defaults to the same host as
 // the passport API for local dev; override per your environment.
-WALLET_API_BASE_URL = http:/$()/localhost:3001
+WALLET_API_BASE_SCHEME = http
+WALLET_API_BASE_HOST = localhost:3001

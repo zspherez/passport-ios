@@ -41,7 +41,7 @@ Hit ▶. First check-in prompts for location.
 
 ### Configuration
 
-Backend hosts are read at runtime from `Info.plist` keys (`APIBaseURL`, `WalletAPIBaseURL`), populated at build time by the xcconfig for the active build configuration. To change a host, edit the xcconfig and rebuild — no source changes, no plist diff.
+Backend hosts are read at runtime from `Info.plist` keys (`APIBaseScheme` + `APIBaseHost`, `WalletAPIBaseScheme` + `WalletAPIBaseHost`), populated at build time by the xcconfig for the active build configuration. `Config.swift` assembles the full URL from the two halves. Scheme and host are kept separate because xcconfig parses `//` as a comment marker — splitting at the protocol separator dodges every escape trick. To change a host, edit the xcconfig and rebuild — no source changes, no plist diff.
 
 Drop one of `Passport/SimulatorLocations/*.gpx` into the simulator's Debug → Location menu to test the geofence at each venue without leaving your desk.
 

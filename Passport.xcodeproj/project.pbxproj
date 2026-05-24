@@ -46,6 +46,7 @@
 		7706C6E71FFFFE313E610E9D /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		7DFF26AD41FC7E2DB9714282 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		7F5AB98FEBC6D1FB18FDA16C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8022C4648AA7277C47776C2F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		846CE928D78133EFC7B08BA6 /* ClaimCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaimCardView.swift; sourceTree = "<group>"; };
 		8BD0D8E10116967262F39713 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F9D27436E3514BC7888965E /* PassportApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassportApp.swift; sourceTree = "<group>"; };
@@ -55,6 +56,7 @@
 		A25AE5B7DF3E72FC737CD7BD /* Charleston.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Charleston.gpx; sourceTree = "<group>"; };
 		A436495F2FC3A7F6A669D7E7 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		A468EDDD81094A8252A42733 /* FlightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightsView.swift; sourceTree = "<group>"; };
+		AA7613FF4341A27783429D15 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		AEB4A284D370BC09E01C97C4 /* ChallengeClosedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeClosedView.swift; sourceTree = "<group>"; };
 		AF5DD38D37885ACE127343FD /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B5220FA92BBC75544015EAE7 /* FarAway.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = FarAway.gpx; sourceTree = "<group>"; };
@@ -65,9 +67,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		0D03F1AA2622581DBA0A676D /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				AA7613FF4341A27783429D15 /* Debug.xcconfig */,
+				8022C4648AA7277C47776C2F /* Release.xcconfig */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		3F0D1E4D3A0498DD9A6AB53A = {
 			isa = PBXGroup;
 			children = (
+				0D03F1AA2622581DBA0A676D /* Configuration */,
 				B1B53B5FE8386C27BC7004C4 /* Passport */,
 				8526B4E7C2B5F40ED14A49F9 /* Products */,
 			);
@@ -281,6 +293,7 @@
 		};
 		9C2EC7072F88A4A17B254448 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AA7613FF4341A27783429D15 /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -366,6 +379,7 @@
 		};
 		BF383148DFEEAABB88827FC2 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8022C4648AA7277C47776C2F /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";

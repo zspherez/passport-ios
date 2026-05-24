@@ -20,10 +20,14 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>APIBaseURL</key>
-	<string>$(API_BASE_URL)</string>
-	<key>WalletAPIBaseURL</key>
-	<string>$(WALLET_API_BASE_URL)</string>
+	<key>APIBaseScheme</key>
+	<string>$(API_BASE_SCHEME)</string>
+	<key>APIBaseHost</key>
+	<string>$(API_BASE_HOST)</string>
+	<key>WalletAPIBaseScheme</key>
+	<string>$(WALLET_API_BASE_SCHEME)</string>
+	<key>WalletAPIBaseHost</key>
+	<string>$(WALLET_API_BASE_HOST)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>

@@ -1,9 +1,11 @@
 // Release build settings for the Passport app.
 //
-// Replace `your-passport-api.example.com` / `your-wallet-api.example.com`
-// with the real production hosts before shipping a release build. See
-// Configuration/Debug.xcconfig for notes on the `$()` escape.
+// Replace the placeholder hosts with the real production ones before
+// shipping a release build. Split into scheme + host so there's no `//`
+// inside any xcconfig value (it would otherwise be parsed as a comment).
 
-API_BASE_URL = https:/$()/your-passport-api.example.com
+API_BASE_SCHEME = https
+API_BASE_HOST = your-passport-api.example.com
 
-WALLET_API_BASE_URL = https:/$()/your-wallet-api.example.com
+WALLET_API_BASE_SCHEME = https
+WALLET_API_BASE_HOST = your-wallet-api.example.com
