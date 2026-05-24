@@ -41,7 +41,8 @@ targets:
               NSExceptionAllowsInsecureHTTPLoads: true
               NSIncludesSubdomains: true
         UILaunchScreen:
-          UIColorName: ""
+          UIColorName: LaunchBackground
+          UIImageName: BrandLogo
         UIRequiredDeviceCapabilities:
           - arm64
         UISupportedInterfaceOrientations:

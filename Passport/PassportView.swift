@@ -111,7 +111,9 @@ struct PassportView: View {
                     tierCard(for: summary)
                 }
                 Spacer(minLength: 0)
+                #if DEBUG
                 resetButton
+                #endif
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
@@ -754,6 +756,9 @@ struct PassportView: View {
         }
     }
 
+    #if DEBUG
+    /// Debug-only escape hatch for re-registering on the same device. There
+    /// is no production sign-out — one passport per device is the model.
     private var resetButton: some View {
         Button("Sign out (testing)") {
             if let token = LocalStore.passportToken {
@@ -766,6 +771,7 @@ struct PassportView: View {
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .center)
     }
+    #endif
 
     private func refresh() async {
         guard let token = LocalStore.passportToken else {

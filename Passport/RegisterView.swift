@@ -9,7 +9,7 @@ struct RegisterView: View {
     @State private var phone: String = ""
     @State private var venueId: VenueId = .nyc
     @State private var isSubmitting = false
-    @State private var errorMessage: String?
+    @State private var failure: RegisterFailure?
     @State private var acceptedTerms: Bool = false
     /// Drives the in-app SFSafariViewController sheet for the T&C link.
     @State private var termsSheet: IdentifiableURL?
@@ -31,11 +31,8 @@ struct RegisterView: View {
                     field(title: "Phone (optional)", text: $phone, contentType: .telephoneNumber, keyboard: .phonePad)
                     venuePicker
                     termsCheckbox
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .font(.footnote)
-                            .foregroundColor(.red)
-                            .padding(.vertical, 4)
+                    if let failure {
+                        failureCallout(failure)
                     }
                     submitButton
                 }
@@ -171,8 +168,47 @@ struct RegisterView: View {
     @State private var submitStep: SubmitStep = .idle
     private enum SubmitStep { case idle, locating, submitting }
 
+    /// Banner shown above the submit button after a failed attempt. One row
+    /// per case — icon, headline, supporting copy. Same chrome for all
+    /// failures so the user reads the same shape every time.
+    private func failureCallout(_ failure: RegisterFailure) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: failure.icon)
+                .font(.title3)
+                .foregroundColor(.red)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(failure.title)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundColor(.white)
+                Text(failure.body)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.red.opacity(0.10))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+        )
+    }
+
     private func submit() {
-        errorMessage = nil
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        if !isPlausibleEmail(trimmedEmail) {
+            failure = .invalidEmail
+            return
+        }
+
+        failure = nil
         isSubmitting = true
         submitStep = .locating
         Task {
@@ -184,8 +220,8 @@ struct RegisterView: View {
                 let loc = try await LocationManager.shared.oneShot()
                 submitStep = .submitting
                 let body = RegisterRequest(
-                    name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                    email: email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                    name: trimmedName,
+                    email: trimmedEmail,
                     phone: phone.isEmpty ? nil : phone,
                     venueId: venueId,
                     latitude: loc.coordinate.latitude,
@@ -197,8 +233,99 @@ struct RegisterView: View {
                 LocalStore.participantEmail = body.email
                 onRegistered()
             } catch {
-                errorMessage = error.localizedDescription
+                failure = RegisterFailure(error: error)
             }
+        }
+    }
+
+    /// Cheap "looks like an email" check so we don't make the user wait for
+    /// a network round-trip on a typo. Backend still has the authoritative
+    /// `z.string().email()` gate.
+    private func isPlausibleEmail(_ s: String) -> Bool {
+        guard let at = s.firstIndex(of: "@"), at != s.startIndex else { return false }
+        let domain = s[s.index(after: at)...]
+        return domain.contains(".") && !domain.hasSuffix(".") && !domain.hasPrefix(".")
+    }
+}
+
+/// Closed set of registration failure modes. Each case carries enough
+/// context to render a tailored message — generic "request failed" copy
+/// is a last resort.
+private enum RegisterFailure: Equatable {
+    /// Couldn't reach the server at all (no network, DNS fail, timeout).
+    case network
+    /// User is outside the venue's geofence. Server's message already
+    /// names the venue and reports the distance, so we just relay it.
+    case tooFar(message: String)
+    /// Client-side email format check failed before we hit the network.
+    case invalidEmail
+    /// Backend returned a per-field validation error (zod flatten result).
+    case validation(field: String, message: String)
+    /// Anything else — backend 5xx, unknown 4xx, decoding failure.
+    case unknown(message: String)
+
+    init(error: Error) {
+        guard let apiError = error as? APIError else {
+            self = .unknown(message: error.localizedDescription)
+            return
+        }
+        switch apiError {
+        case .network:
+            self = .network
+        case .invalidURL, .invalidResponse:
+            self = .unknown(message: apiError.errorDescription ?? "Unexpected response from the server.")
+        case .server(let message):
+            self = Self.classify(serverMessage: message)
+        }
+    }
+
+    private static func classify(serverMessage message: String) -> RegisterFailure {
+        if message.hasPrefix("Too far") {
+            return .tooFar(message: message)
+        }
+        // `humanReadableError` formats zod field errors as "field: message".
+        if let colon = message.firstIndex(of: ":") {
+            let field = String(message[..<colon])
+            let rest = message[message.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+            if !field.isEmpty && !rest.isEmpty && !field.contains(" ") {
+                return .validation(field: field, message: rest)
+            }
+        }
+        return .unknown(message: message)
+    }
+
+    var icon: String {
+        switch self {
+        case .network:        return "wifi.slash"
+        case .tooFar:         return "location.slash"
+        case .invalidEmail:   return "envelope.badge.shield.half.filled"
+        case .validation:     return "exclamationmark.bubble"
+        case .unknown:        return "exclamationmark.circle"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .network:                   return "Can't reach the server"
+        case .tooFar:                    return "You're not at the venue"
+        case .invalidEmail:              return "That email doesn't look right"
+        case .validation(let field, _): return "Check your \(field)"
+        case .unknown:                   return "Something went wrong"
+        }
+    }
+
+    var body: String {
+        switch self {
+        case .network:
+            return "Check your connection and try again."
+        case .tooFar(let message):
+            return message + ". Make sure Location is set to \"While Using the App\" and you're inside the bar."
+        case .invalidEmail:
+            return "Double-check the address — we need a valid one to send your wallet card."
+        case .validation(_, let message):
+            return message
+        case .unknown(let message):
+            return message
         }
     }
 }

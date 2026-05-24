@@ -98,9 +98,10 @@ Passport/
 
 ## TODO before it's real
 
-- [ ] Settings screen with proper sign-out (today it's a dev "Sign out (testing)" link).
-- [ ] Better empty / error states once registration rejects (e.g., email already in use).
 - [ ] QR scan flow — a per-venue printed QR with a secret token would add a third gate against someone driving past a venue with a spoofed location.
 - [ ] Universal Links so a printed QR opens directly into the check-in flow when the app is installed.
-- [ ] App icon + launch screen artwork.
 - [ ] Real T&C URL (placeholder points at `docusign.com`).
+
+## Debug-only escape hatches
+
+- `PassportView` has a "Sign out (testing)" link gated behind `#if DEBUG`. Production has no sign-out — one passport per device is the model.
