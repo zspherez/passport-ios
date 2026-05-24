@@ -98,8 +98,7 @@ Passport/
 
 ## TODO before it's real
 
-- [ ] QR scan flow — a per-venue printed QR with a secret token would add a third gate against someone driving past a venue with a spoofed location.
-- [ ] Universal Links so a printed QR opens directly into the check-in flow when the app is installed.
+- [ ] Per-venue QR + Universal Links — adds a third gate against spoofed-location stamps and gives the printed QR a direct-to-app handoff. POC built and reverted (`d15cfe8`); design lives in [`docs/qr-third-gate.md`](docs/qr-third-gate.md) pending decisions on printing/rotation/no-app UX.
 - [ ] Real T&C URL (placeholder points at `docusign.com`).
 
 ## Debug-only escape hatches
