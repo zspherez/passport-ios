@@ -44,10 +44,6 @@ struct RegisterRequest: Codable {
     let email: String
     let phone: String?
     let venueId: VenueId
-    /// Per-venue secret from the venue's printed QR code. Backend gates on
-    /// this in addition to the geofence — registration is a first-stamp
-    /// event so it runs the full three-gate check.
-    let venueQrToken: String
     let latitude: Double
     let longitude: Double
 }
@@ -55,9 +51,6 @@ struct RegisterRequest: Codable {
 struct CheckinRequest: Codable {
     let passportToken: String
     let venueId: VenueId
-    /// Per-venue secret from the venue's printed QR code. Server compares
-    /// against VENUE_QR_SECRETS in constant time; mismatch is a 403.
-    let venueQrToken: String
     let latitude: Double
     let longitude: Double
 }

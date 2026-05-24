@@ -7,6 +7,3 @@
 API_BASE_URL = https:/$()/your-passport-api.example.com
 
 WALLET_API_BASE_URL = https:/$()/your-wallet-api.example.com
-
-// Universal Links host. Must match the host serving the AASA file.
-ASSOCIATED_DOMAIN = your-passport-api.example.com

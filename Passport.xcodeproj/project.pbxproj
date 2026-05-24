@@ -10,7 +10,6 @@
 		004CB7871A31467BFF5DEF0A /* Flights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133AB0626078A7AD556A8422 /* Flights.swift */; };
 		012186BDB8E189EF4BD9709E /* FlightsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20E164F88C9185216AB5086D /* FlightsAPI.swift */; };
 		0DED7A2B412406947A8E7E28 /* PassportApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9D27436E3514BC7888965E /* PassportApp.swift */; };
-		13F580CFBD0342EC77D2EE40 /* DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = D618676BBDF0AF08B8CB1451 /* DeepLink.swift */; };
 		1D72F31C5B69BB29876F3B3D /* PassportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B818F68D2DF3FC5A70D5AF0 /* PassportView.swift */; };
 		4466DB36EF7F59F71F007321 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A436495F2FC3A7F6A669D7E7 /* APIClient.swift */; };
 		52A2C90421744B8AB2D9C8B1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62C69107955811164B149AC /* ContentView.swift */; };
@@ -22,7 +21,6 @@
 		86F04572462260E372B59612 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BD0D8E10116967262F39713 /* Assets.xcassets */; };
 		8803B53E066946F11C28A46A /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A333385CFF8983CA934E693 /* RegisterView.swift */; };
 		9A495354FF3130B3CAC03595 /* ChallengeWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12861530B58210537C014366 /* ChallengeWindow.swift */; };
-		A82F6ACE0123FC6CE3BDB02D /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEAC2FA796E61D91968ED6FC /* QRScannerView.swift */; };
 		AAE05F621697FF6647511272 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7706C6E71FFFFE313E610E9D /* Config.swift */; };
 		AF320C4F4B755F5CB6E18DDE /* CheckinQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4865E170CADD9B02CD8F17 /* CheckinQueue.swift */; };
 		B1C443321AD7613A9C4BA955 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BF41CDCFC4D10B90FB6C59 /* LocalStore.swift */; };
@@ -48,43 +46,28 @@
 		7706C6E71FFFFE313E610E9D /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		7DFF26AD41FC7E2DB9714282 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		7F5AB98FEBC6D1FB18FDA16C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		8022C4648AA7277C47776C2F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		846CE928D78133EFC7B08BA6 /* ClaimCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaimCardView.swift; sourceTree = "<group>"; };
 		8BD0D8E10116967262F39713 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F9D27436E3514BC7888965E /* PassportApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassportApp.swift; sourceTree = "<group>"; };
 		9A333385CFF8983CA934E693 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		9B818F68D2DF3FC5A70D5AF0 /* PassportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassportView.swift; sourceTree = "<group>"; };
-		9BB6C1ADF37BBB68DE9A4B1E /* Passport.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Passport.entitlements; sourceTree = "<group>"; };
 		A1BF41CDCFC4D10B90FB6C59 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		A25AE5B7DF3E72FC737CD7BD /* Charleston.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Charleston.gpx; sourceTree = "<group>"; };
 		A436495F2FC3A7F6A669D7E7 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		A468EDDD81094A8252A42733 /* FlightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightsView.swift; sourceTree = "<group>"; };
-		AA7613FF4341A27783429D15 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		AEB4A284D370BC09E01C97C4 /* ChallengeClosedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeClosedView.swift; sourceTree = "<group>"; };
 		AF5DD38D37885ACE127343FD /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B5220FA92BBC75544015EAE7 /* FarAway.gpx */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = FarAway.gpx; sourceTree = "<group>"; };
 		C3F8CF8519B811A014EEC62B /* SafariSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariSheet.swift; sourceTree = "<group>"; };
 		C62C69107955811164B149AC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D11B6795EEC31466889EB716 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		D618676BBDF0AF08B8CB1451 /* DeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLink.swift; sourceTree = "<group>"; };
-		DEAC2FA796E61D91968ED6FC /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
 		E8D183E624D5543F7739B753 /* EditCheckoutSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCheckoutSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		0D03F1AA2622581DBA0A676D /* Configuration */ = {
-			isa = PBXGroup;
-			children = (
-				AA7613FF4341A27783429D15 /* Debug.xcconfig */,
-				8022C4648AA7277C47776C2F /* Release.xcconfig */,
-			);
-			path = Configuration;
-			sourceTree = "<group>";
-		};
 		3F0D1E4D3A0498DD9A6AB53A = {
 			isa = PBXGroup;
 			children = (
-				0D03F1AA2622581DBA0A676D /* Configuration */,
 				B1B53B5FE8386C27BC7004C4 /* Passport */,
 				8526B4E7C2B5F40ED14A49F9 /* Products */,
 			);
@@ -123,7 +106,6 @@
 				846CE928D78133EFC7B08BA6 /* ClaimCardView.swift */,
 				7706C6E71FFFFE313E610E9D /* Config.swift */,
 				C62C69107955811164B149AC /* ContentView.swift */,
-				D618676BBDF0AF08B8CB1451 /* DeepLink.swift */,
 				E8D183E624D5543F7739B753 /* EditCheckoutSheet.swift */,
 				396EFE4AD42F0DF66253327F /* FlightCountdownView.swift */,
 				133AB0626078A7AD556A8422 /* Flights.swift */,
@@ -133,10 +115,8 @@
 				A1BF41CDCFC4D10B90FB6C59 /* LocalStore.swift */,
 				D11B6795EEC31466889EB716 /* LocationManager.swift */,
 				AF5DD38D37885ACE127343FD /* Models.swift */,
-				9BB6C1ADF37BBB68DE9A4B1E /* Passport.entitlements */,
 				8F9D27436E3514BC7888965E /* PassportApp.swift */,
 				9B818F68D2DF3FC5A70D5AF0 /* PassportView.swift */,
-				DEAC2FA796E61D91968ED6FC /* QRScannerView.swift */,
 				9A333385CFF8983CA934E693 /* RegisterView.swift */,
 				C3F8CF8519B811A014EEC62B /* SafariSheet.swift */,
 				56D143C239D33957C6974006 /* Venues.swift */,
@@ -224,7 +204,6 @@
 				DBD5197002341C4417350C40 /* ClaimCardView.swift in Sources */,
 				AAE05F621697FF6647511272 /* Config.swift in Sources */,
 				52A2C90421744B8AB2D9C8B1 /* ContentView.swift in Sources */,
-				13F580CFBD0342EC77D2EE40 /* DeepLink.swift in Sources */,
 				B8AD57621EF467CAD035B40C /* EditCheckoutSheet.swift in Sources */,
 				EE85351BE6205486B1F592B9 /* FlightCountdownView.swift in Sources */,
 				004CB7871A31467BFF5DEF0A /* Flights.swift in Sources */,
@@ -235,7 +214,6 @@
 				7131708E11FF95524C76C2F3 /* Models.swift in Sources */,
 				0DED7A2B412406947A8E7E28 /* PassportApp.swift in Sources */,
 				1D72F31C5B69BB29876F3B3D /* PassportView.swift in Sources */,
-				A82F6ACE0123FC6CE3BDB02D /* QRScannerView.swift in Sources */,
 				8803B53E066946F11C28A46A /* RegisterView.swift in Sources */,
 				C47FA6D6196FDFE4D30D2912 /* SafariSheet.swift in Sources */,
 				816D041C5D67CB9CCCF80BBF /* Venues.swift in Sources */,
@@ -303,10 +281,8 @@
 		};
 		9C2EC7072F88A4A17B254448 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AA7613FF4341A27783429D15 /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Passport/Passport.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
@@ -390,10 +366,8 @@
 		};
 		BF383148DFEEAABB88827FC2 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8022C4648AA7277C47776C2F /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Passport/Passport.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";

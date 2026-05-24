@@ -14,10 +14,3 @@ API_BASE_URL = http:/$()/localhost:3001
 // Wallet-card backend (mothers/backend). Defaults to the same host as
 // the passport API for local dev; override per your environment.
 WALLET_API_BASE_URL = http:/$()/localhost:3001
-
-// Universal Links host. Baked into the entitlements as `applinks:$(ASSOCIATED_DOMAIN)`,
-// and must match the host serving /.well-known/apple-app-site-association.
-// Universal Links DO NOT work with localhost — for dev testing of the deep
-// link itself, use a TLS-fronted tunnel (e.g. ngrok https URL) or your
-// staging host. The in-app QR scanner works in dev regardless.
-ASSOCIATED_DOMAIN = your-passport-api.example.com
