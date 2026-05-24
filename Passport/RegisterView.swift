@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// First-launch screen. Captures name + email + initial venue, calls
-/// /passport/register, and stores the resulting passport token locally
-/// so subsequent launches go straight to the passport view.
+/// Pre-event signup screen. Captures name + email + the venue the
+/// customer plans to start at on challenge day. No location check here —
+/// the first stamp lands when they actually arrive at a venue and tap
+/// the cell. The token + cached name/email persist in LocalStore so
+/// subsequent launches go straight to the passport view.
 struct RegisterView: View {
     @State private var name: String = ""
     @State private var email: String = ""
@@ -90,13 +92,13 @@ struct RegisterView: View {
                 Text("Mother's Day Challenge")
                     .font(.system(size: 22, weight: .heavy))
                     .foregroundColor(Brand.gold)
-                Text("Start your passport")
+                Text("Set up your passport")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(2)
             }
-            Text("You'll get a stamp at each Mother's Ruin you visit on May 9. Charleston is required; pick at least two more.")
+            Text("Register before May 9. On the day, tap \u{201C}I\u{2019}m starting the day\u{201D} to begin your run — your first stamp lands when you arrive at your first venue. Charleston is required; visit three or more for the entry tier.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -128,7 +130,7 @@ struct RegisterView: View {
 
     private var venuePicker: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Which venue are you at right now?")
+            Text("Where are you planning to start?")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
             Picker("Venue", selection: $venueId) {
@@ -137,6 +139,9 @@ struct RegisterView: View {
                 }
             }
             .pickerStyle(.segmented)
+            Text("Just a hint for the day — your first actual stamp can be at any venue.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -144,7 +149,7 @@ struct RegisterView: View {
         Button(action: submit) {
             HStack {
                 if isSubmitting { ProgressView().tint(.black) }
-                Text(buttonLabel)
+                Text(isSubmitting ? "Submitting…" : "Save my passport")
                     .font(.headline)
                     .foregroundColor(.black)
             }
@@ -156,17 +161,6 @@ struct RegisterView: View {
         .disabled(isSubmitting || name.isEmpty || email.isEmpty || !acceptedTerms)
         .padding(.top, 8)
     }
-
-    private var buttonLabel: String {
-        switch submitStep {
-        case .idle:        return "Start passport"
-        case .locating:    return "Verifying location…"
-        case .submitting:  return "Submitting…"
-        }
-    }
-
-    @State private var submitStep: SubmitStep = .idle
-    private enum SubmitStep { case idle, locating, submitting }
 
     /// Banner shown above the submit button after a failed attempt. One row
     /// per case — icon, headline, supporting copy. Same chrome for all
@@ -210,22 +204,14 @@ struct RegisterView: View {
 
         failure = nil
         isSubmitting = true
-        submitStep = .locating
         Task {
-            defer {
-                isSubmitting = false
-                submitStep = .idle
-            }
+            defer { isSubmitting = false }
             do {
-                let loc = try await LocationManager.shared.oneShot()
-                submitStep = .submitting
                 let body = RegisterRequest(
                     name: trimmedName,
                     email: trimmedEmail,
                     phone: phone.isEmpty ? nil : phone,
-                    venueId: venueId,
-                    latitude: loc.coordinate.latitude,
-                    longitude: loc.coordinate.longitude
+                    venueId: venueId
                 )
                 let resp = try await APIClient.register(body)
                 LocalStore.passportToken = resp.passportToken
@@ -254,9 +240,6 @@ struct RegisterView: View {
 private enum RegisterFailure: Equatable {
     /// Couldn't reach the server at all (no network, DNS fail, timeout).
     case network
-    /// User is outside the venue's geofence. Server's message already
-    /// names the venue and reports the distance, so we just relay it.
-    case tooFar(message: String)
     /// Client-side email format check failed before we hit the network.
     case invalidEmail
     /// Backend returned a per-field validation error (zod flatten result).
@@ -280,9 +263,6 @@ private enum RegisterFailure: Equatable {
     }
 
     private static func classify(serverMessage message: String) -> RegisterFailure {
-        if message.hasPrefix("Too far") {
-            return .tooFar(message: message)
-        }
         // `humanReadableError` formats zod field errors as "field: message".
         if let colon = message.firstIndex(of: ":") {
             let field = String(message[..<colon])
@@ -297,7 +277,6 @@ private enum RegisterFailure: Equatable {
     var icon: String {
         switch self {
         case .network:        return "wifi.slash"
-        case .tooFar:         return "location.slash"
         case .invalidEmail:   return "envelope.badge.shield.half.filled"
         case .validation:     return "exclamationmark.bubble"
         case .unknown:        return "exclamationmark.circle"
@@ -307,7 +286,6 @@ private enum RegisterFailure: Equatable {
     var title: String {
         switch self {
         case .network:                   return "Can't reach the server"
-        case .tooFar:                    return "You're not at the venue"
         case .invalidEmail:              return "That email doesn't look right"
         case .validation(let field, _): return "Check your \(field)"
         case .unknown:                   return "Something went wrong"
@@ -318,8 +296,6 @@ private enum RegisterFailure: Equatable {
         switch self {
         case .network:
             return "Check your connection and try again."
-        case .tooFar(let message):
-            return message + ". Make sure Location is set to \"While Using the App\" and you're inside the bar."
         case .invalidEmail:
             return "Double-check the address — we need a valid one to send your wallet card."
         case .validation(_, let message):

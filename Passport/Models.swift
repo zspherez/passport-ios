@@ -43,9 +43,11 @@ struct RegisterRequest: Codable {
     let name: String
     let email: String
     let phone: String?
+    /// Where the customer plans to start on challenge day. Stored as a
+    /// hint on the server (`participants.registered_venue_id`) but not
+    /// gating anything — they can ultimately start their first stamp at
+    /// any venue. No location capture at registration.
     let venueId: VenueId
-    let latitude: Double
-    let longitude: Double
 }
 
 struct CheckinRequest: Codable {

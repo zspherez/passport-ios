@@ -1,13 +1,14 @@
 # Passport — iOS
 
-iOS client for the Mother's Ruin Mother's Day Challenge — a location-verified bar-crawl passport across the five Mother's Ruin venues. Pairs with the `mothers/passport` Node/Fastify backend (private repo: [`zspherez/passport-backend`](https://github.com/zspherez/passport-backend) — drop me a line if you need access for a code-sample review). POC built to pitch the May 9, 2027 challenge.
+iOS client for the Mother's Ruin Mother's Day Challenge — a location-verified bar-crawl passport across the five Mother's Ruin venues. Pairs with a currently private Node/Fastify backend to store/verify data. POC built to pitch the May 9, 2027 challenge.
 
 ## Flow
 
-1. **First launch** → register with name, email, and which venue you're at right now. Backend issues a `passportToken`, stored in `UserDefaults`.
-2. **Steady state** → passport view pulls `GET /passport/me/:token` and renders the 5-venue stamp grid. Charleston required, two more for the entry tier.
-3. **Check in** → tap a venue cell. App grabs a single CoreLocation fix, runs the client-side geofence gate (200m, see `Venues.swift`), and enqueues a check-in to `CheckinQueue`. The queue drains to `POST /passport/checkin` in the background and retries on network failure.
-4. **Claim** → once eligible, `ClaimCardView` posts to the wallet-card backend's `POST /signup/request` for an Add-to-Wallet link, then marks the passport complete server-side.
+1. **Setup (any time before challenge day)** → register with name, email, and the venue you're planning to start at. Backend issues a `passportToken`, stored in `UserDefaults`. No location check — this is paperwork, not a stamp.
+2. **Steady state** → passport view pulls `GET /passport/me/:token` and renders the 5-venue stamp grid (empty until the first arrival). Charleston required, three stamps total for the entry tier.
+3. **Day start** → on challenge morning, tap "I'm starting the day" to arm the timer (`POST /passport/me/:token/start`). Idempotent, so a second tap doesn't reset it.
+4. **Check in** → at each venue, tap the cell. App grabs a single CoreLocation fix, runs the client-side geofence gate (200m, see `Venues.swift`), and enqueues a check-in to `CheckinQueue`. The queue drains to `POST /passport/checkin` in the background and retries on network failure. The first check-in is the first stamp — no auto-stamp at registration.
+5. **Claim** → once eligible, `ClaimCardView` posts to the wallet-card backend's `POST /signup/request` for an Add-to-Wallet link, then marks the passport complete server-side.
 
 ## Verification model
 
@@ -51,7 +52,7 @@ Mirrors `mothers/passport/src/routes/`.
 
 | Method | Path | Body / Response | Notes |
 |---|---|---|---|
-| `POST` | `/passport/register` | `{ name, email, phone?, venueId, latitude, longitude }` | Issues `passportToken`; first stamp inserted in the same transaction |
+| `POST` | `/passport/register` | `{ name, email, phone?, venueId }` | Pre-event signup; no location, no stamp. `venueId` is the planned starting venue. |
 | `POST` | `/passport/checkin` | `{ passportToken, venueId, latitude, longitude }` | Stamps a venue; unique on `(participant, venue)` |
 | `GET`  | `/passport/me/:token` | → `{ passport, stamps, eligibleTier }` | Source of truth for the grid |
 | `POST` | `/passport/me/:token/start` | _empty_ | Marks the customer's day as started (idempotent) |
