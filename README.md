@@ -1,6 +1,6 @@
 # Passport — iOS
 
-iOS client for the Mother's Ruin Mother's Day Challenge — a location-verified bar-crawl passport across the five Mother's Ruin venues. Pairs with the `mothers/passport` Node/Fastify backend. POC built to pitch the May 9, 2027 challenge.
+iOS client for the Mother's Ruin Mother's Day Challenge — a location-verified bar-crawl passport across the five Mother's Ruin venues. Pairs with the `mothers/passport` Node/Fastify backend (private repo: [`zspherez/passport-backend`](https://github.com/zspherez/passport-backend) — drop me a line if you need access for a code-sample review). POC built to pitch the May 9, 2027 challenge.
 
 ## Flow
 
