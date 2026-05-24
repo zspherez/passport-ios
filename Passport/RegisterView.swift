@@ -1,18 +1,26 @@
 import SwiftUI
 
-/// First-launch screen. Captures name + email + initial venue, calls
-/// /passport/register, and stores the resulting passport token locally
-/// so subsequent launches go straight to the passport view.
+/// First-launch screen. Captures name + email + the venue QR the customer
+/// is standing in front of, calls /passport/register, and stores the
+/// returned passport token locally so subsequent launches go straight to
+/// the passport view. Two ways to get the venue QR onto the form:
+///   1. Universal Link from the system camera lands directly here with
+///      `scannedQR` pre-filled (see DeepLinkRouter).
+///   2. Tap "Scan venue QR" inside the form to open the in-app scanner.
+/// Either way the venue + token are locked once captured — the registration
+/// request can't proceed without them.
 struct RegisterView: View {
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var phone: String = ""
-    @State private var venueId: VenueId = .nyc
+    @State private var scannedQR: ScannedVenueQR?
     @State private var isSubmitting = false
+    @State private var showingScanner = false
     @State private var failure: RegisterFailure?
     @State private var acceptedTerms: Bool = false
     /// Drives the in-app SFSafariViewController sheet for the T&C link.
     @State private var termsSheet: IdentifiableURL?
+    @EnvironmentObject private var deepLinks: DeepLinkRouter
 
     /// Where "terms and conditions in DocuSign" navigates. Placeholder until
     /// the real DocuSign URL is provisioned.
@@ -26,10 +34,10 @@ struct RegisterView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
+                    venueScanCard
                     field(title: "Legal name", text: $name, contentType: .name)
                     field(title: "Email", text: $email, contentType: .emailAddress, keyboard: .emailAddress)
                     field(title: "Phone (optional)", text: $phone, contentType: .telephoneNumber, keyboard: .phonePad)
-                    venuePicker
                     termsCheckbox
                     if let failure {
                         failureCallout(failure)
@@ -40,9 +48,69 @@ struct RegisterView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear { consumeDeepLinkIfPresent() }
+        .onChange(of: deepLinks.pendingScan) { _ in consumeDeepLinkIfPresent() }
         .sheet(item: $termsSheet) { wrapped in
             SafariSheet(url: wrapped.url)
                 .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingScanner) {
+            QRScannerView(
+                onScan: { payload in
+                    showingScanner = false
+                    handleScannedPayload(payload)
+                },
+                onCancel: { showingScanner = false }
+            )
+            .ignoresSafeArea()
+        }
+    }
+
+    /// Replaces the old segmented venue picker. Pre-scan: a single CTA to
+    /// open the scanner. Post-scan: confirmation of which venue is locked
+    /// in, with a "Re-scan" link in case they tapped the wrong QR.
+    private var venueScanCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Venue")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            if let scanned = scannedQR {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(Brand.gold)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(scanned.venueId.displayName)
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(.white)
+                        Text("Venue QR verified")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Re-scan") { showingScanner = true }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundColor(Brand.gold)
+                }
+                .padding(12)
+                .background(Color(red: 0.16, green: 0.16, blue: 0.17))
+                .cornerRadius(8)
+            } else {
+                Button(action: { showingScanner = true }) {
+                    HStack {
+                        Image(systemName: "qrcode.viewfinder")
+                        Text("Scan venue QR")
+                            .font(.headline)
+                        Spacer()
+                    }
+                    .foregroundColor(Brand.gold)
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Brand.gold.opacity(0.6), style: StrokeStyle(lineWidth: 1.2, dash: [4, 4]))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -126,20 +194,6 @@ struct RegisterView: View {
         }
     }
 
-    private var venuePicker: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Which venue are you at right now?")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            Picker("Venue", selection: $venueId) {
-                ForEach(VenueId.allCases, id: \.self) { v in
-                    Text(v.displayName).tag(v)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-    }
-
     private var submitButton: some View {
         Button(action: submit) {
             HStack {
@@ -153,13 +207,13 @@ struct RegisterView: View {
             .background(Brand.gold)
             .cornerRadius(12)
         }
-        .disabled(isSubmitting || name.isEmpty || email.isEmpty || !acceptedTerms)
+        .disabled(isSubmitting || name.isEmpty || email.isEmpty || !acceptedTerms || scannedQR == nil)
         .padding(.top, 8)
     }
 
     private var buttonLabel: String {
         switch submitStep {
-        case .idle:        return "Start passport"
+        case .idle:        return scannedQR == nil ? "Scan venue QR to begin" : "Start passport"
         case .locating:    return "Verifying location…"
         case .submitting:  return "Submitting…"
         }
@@ -169,8 +223,7 @@ struct RegisterView: View {
     private enum SubmitStep { case idle, locating, submitting }
 
     /// Banner shown above the submit button after a failed attempt. One row
-    /// per case — icon, headline, supporting copy. Same chrome for all
-    /// failures so the user reads the same shape every time.
+    /// per case — icon, headline, supporting copy.
     private func failureCallout(_ failure: RegisterFailure) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: failure.icon)
@@ -199,10 +252,32 @@ struct RegisterView: View {
         )
     }
 
+    private func consumeDeepLinkIfPresent() {
+        if let scan = deepLinks.consume() {
+            scannedQR = scan
+        }
+    }
+
+    private func handleScannedPayload(_ payload: String) {
+        guard let scan = DeepLink.parseVenueQR(from: payload) else {
+            failure = .invalidQR
+            return
+        }
+        scannedQR = scan
+        // Clear any prior "scan the QR first" prompt or unrelated error.
+        if failure == .invalidQR || failure == .missingQR {
+            failure = nil
+        }
+    }
+
     private func submit() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
+        guard let scan = scannedQR else {
+            failure = .missingQR
+            return
+        }
         if !isPlausibleEmail(trimmedEmail) {
             failure = .invalidEmail
             return
@@ -223,7 +298,8 @@ struct RegisterView: View {
                     name: trimmedName,
                     email: trimmedEmail,
                     phone: phone.isEmpty ? nil : phone,
-                    venueId: venueId,
+                    venueId: scan.venueId,
+                    venueQrToken: scan.qrToken,
                     latitude: loc.coordinate.latitude,
                     longitude: loc.coordinate.longitude
                 )
@@ -257,10 +333,16 @@ private enum RegisterFailure: Equatable {
     /// User is outside the venue's geofence. Server's message already
     /// names the venue and reports the distance, so we just relay it.
     case tooFar(message: String)
+    /// User hit submit without scanning a venue QR first.
+    case missingQR
+    /// Scanned a QR but it didn't decode to a known venue.
+    case invalidQR
     /// Client-side email format check failed before we hit the network.
     case invalidEmail
     /// Backend returned a per-field validation error (zod flatten result).
     case validation(field: String, message: String)
+    /// Server says the QR secret doesn't match — likely a stale or wrong QR.
+    case wrongVenueQR
     /// Anything else — backend 5xx, unknown 4xx, decoding failure.
     case unknown(message: String)
 
@@ -283,6 +365,9 @@ private enum RegisterFailure: Equatable {
         if message.hasPrefix("Too far") {
             return .tooFar(message: message)
         }
+        if message.contains("Venue QR") {
+            return .wrongVenueQR
+        }
         // `humanReadableError` formats zod field errors as "field: message".
         if let colon = message.firstIndex(of: ":") {
             let field = String(message[..<colon])
@@ -298,8 +383,11 @@ private enum RegisterFailure: Equatable {
         switch self {
         case .network:        return "wifi.slash"
         case .tooFar:         return "location.slash"
+        case .missingQR:      return "qrcode.viewfinder"
+        case .invalidQR:      return "exclamationmark.triangle"
         case .invalidEmail:   return "envelope.badge.shield.half.filled"
         case .validation:     return "exclamationmark.bubble"
+        case .wrongVenueQR:   return "qrcode"
         case .unknown:        return "exclamationmark.circle"
         }
     }
@@ -308,8 +396,11 @@ private enum RegisterFailure: Equatable {
         switch self {
         case .network:                   return "Can't reach the server"
         case .tooFar:                    return "You're not at the venue"
+        case .missingQR:                 return "Scan the venue QR first"
+        case .invalidQR:                 return "That isn't a venue QR"
         case .invalidEmail:              return "That email doesn't look right"
         case .validation(let field, _): return "Check your \(field)"
+        case .wrongVenueQR:              return "Wrong venue QR"
         case .unknown:                   return "Something went wrong"
         }
     }
@@ -320,10 +411,16 @@ private enum RegisterFailure: Equatable {
             return "Check your connection and try again."
         case .tooFar(let message):
             return message + ". Make sure Location is set to \"While Using the App\" and you're inside the bar."
+        case .missingQR:
+            return "Tap \"Scan venue QR\" and point your camera at the printed QR on the bar."
+        case .invalidQR:
+            return "That QR code didn't look like a Mother's Ruin venue QR. Try the printed one on the bar."
         case .invalidEmail:
             return "Double-check the address — we need a valid one to send your wallet card."
         case .validation(_, let message):
             return message
+        case .wrongVenueQR:
+            return "The scanned QR doesn't match this venue's current secret. Ask staff to confirm the QR isn't an old printout."
         case .unknown(let message):
             return message
         }
@@ -332,4 +429,5 @@ private enum RegisterFailure: Equatable {
 
 #Preview {
     RegisterView(onRegistered: {})
+        .environmentObject(DeepLinkRouter.shared)
 }

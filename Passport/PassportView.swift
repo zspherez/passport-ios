@@ -21,6 +21,14 @@ struct PassportView: View {
     /// sheet is open.
     @State private var editingCheckout: EditingCheckoutTarget?
     @StateObject private var queue = CheckinQueue.shared
+    @EnvironmentObject private var deepLinks: DeepLinkRouter
+    /// True while the QR scanner sheet is presented. The sheet is the only
+    /// way to start a check-in from inside the app — tapping an unstamped
+    /// cell flips this on, and the scanner's callback runs the check-in
+    /// with whatever venue+token the QR encoded (the tapped cell's venueId
+    /// is just a hint; the QR is canonical so we can't be tricked into
+    /// stamping the wrong venue).
+    @State private var showingScanner = false
 
     let onReset: () -> Void
 
@@ -45,6 +53,16 @@ struct PassportView: View {
             // the server and the pending indicator clears.
             Task { await refresh() }
         }
+        .onChange(of: deepLinks.pendingScan) { scan in
+            // Universal Link arrived (system-camera scan, or someone tapped
+            // the venue URL anywhere on iOS). Consume the scan and run the
+            // check-in with whatever venue+token it carried. No scanner
+            // sheet — the URL is the scan.
+            if let scan {
+                deepLinks.consume()
+                Task { await performCheckin(scan: scan) }
+            }
+        }
         .alert("Can't check in", isPresented: Binding(
             get: { checkinError != nil },
             set: { if !$0 { checkinError = nil } }
@@ -52,6 +70,16 @@ struct PassportView: View {
             Button("OK") { checkinError = nil }
         } message: {
             Text(checkinError ?? "")
+        }
+        .sheet(isPresented: $showingScanner) {
+            QRScannerView(
+                onScan: { payload in
+                    showingScanner = false
+                    handleScannedPayload(payload)
+                },
+                onCancel: { showingScanner = false }
+            )
+            .ignoresSafeArea()
         }
         .sheet(item: $editingCheckout) { target in
             EditCheckoutSheet(
@@ -264,34 +292,54 @@ struct PassportView: View {
                 )
             }
         } else {
-            // Not stamped → run the location-verified check-in inline.
-            Task { await inlineCheckin(venue: venue) }
+            // Not stamped → open the QR scanner. The QR encodes the venue +
+            // secret; we'll run the check-in once it's read.
+            showingScanner = true
         }
     }
 
-    /// Cell-tap check-in: grab a single CoreLocation fix, run the client-
-    /// side geofence gate, and enqueue a `PendingCheckin` on success. Done
-    /// entirely from the main passport screen — no modal, just a spinner
-    /// overlay on the tapped cell while location resolves.
-    private func inlineCheckin(venue: VenueId) async {
+    /// Coming out of the in-app scanner. The QR string is parsed; valid
+    /// payloads run through `performCheckin`, anything else raises an alert.
+    /// Anti-spoof: we don't trust the cell the user tapped — only the
+    /// venue encoded inside the QR can drive a stamp.
+    private func handleScannedPayload(_ payload: String) {
+        guard let scan = DeepLink.parseVenueQR(from: payload) else {
+            checkinError = "That QR code didn't look like a Mother's Ruin venue QR."
+            return
+        }
+        Task { await performCheckin(scan: scan) }
+    }
+
+    /// Three-gate check-in: passport token (already in LocalStore),
+    /// CoreLocation fix vs the local geofence, and the per-venue QR secret
+    /// (passed in via `scan`). On success the stamp is enqueued through
+    /// `CheckinQueue` so it survives a network blip.
+    private func performCheckin(scan: ScannedVenueQR) async {
         guard let token = LocalStore.passportToken else {
             checkinError = "No passport token on this device. Re-register."
             return
         }
-        verifyingVenue = venue
+        // Already-stamped venues short-circuit to a friendlier alert than
+        // letting the server 409 us via the queue.
+        if let summary, summary.stamps.contains(where: { $0.venueId == scan.venueId }) {
+            checkinError = "You've already stamped \(scan.venueId.displayName)."
+            return
+        }
+        verifyingVenue = scan.venueId
         defer { verifyingVenue = nil }
         do {
             let loc = try await LocationManager.shared.oneShot()
-            let distance = Venues.distanceMeters(from: loc.coordinate, to: venue)
+            let distance = Venues.distanceMeters(from: loc.coordinate, to: scan.venueId)
             if distance > Venues.geofenceMeters {
-                checkinError = "Too far from \(venue.displayName) (\(Int(distance)) m away — must be within \(Int(Venues.geofenceMeters)) m)."
+                checkinError = "Too far from \(scan.venueId.displayName) (\(Int(distance)) m away — must be within \(Int(Venues.geofenceMeters)) m)."
                 return
             }
             let pending = PendingCheckin(
                 id: UUID(),
                 kind: .checkin,
                 token: token,
-                venueId: venue,
+                venueId: scan.venueId,
+                venueQrToken: scan.qrToken,
                 latitude: loc.coordinate.latitude,
                 longitude: loc.coordinate.longitude,
                 observedAt: Date()

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Universal Links target. The host is wired through the xcconfig
+	  (ASSOCIATED_DOMAIN, defined in Configuration/Debug.xcconfig and
+	  Release.xcconfig) so Debug and Release builds can point at separate
+	  staging hosts without editing this file.
+
+	  iOS resolves the AASA file at:
+	    https://<ASSOCIATED_DOMAIN>/.well-known/apple-app-site-association
+	  served by the passport backend's `aasaRoutes`. That file declares
+	  which paths under the host open this app — currently `/v/*`, the
+	  venue check-in pages.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:$(ASSOCIATED_DOMAIN)</string>
+	</array>
+</dict>
+</plist>

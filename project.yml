@@ -30,6 +30,7 @@ targets:
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         LSRequiresIPhoneOS: true
+        NSCameraUsageDescription: "Reads the QR code on each venue's bar so your passport stamp is tied to the venue you scanned, not just one nearby."
         NSLocationWhenInUseUsageDescription: "Verifies you're physically at a Mother's Ruin location when you stamp your passport."
         # Allow plaintext HTTP only to localhost so the Simulator can talk
         # to a backend run via `npm run dev`. All other hosts still need
@@ -57,3 +58,4 @@ targets:
         ENABLE_PREVIEWS: YES
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Passport/Passport.entitlements

@@ -41,6 +41,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Reads the QR code on each venue's bar so your passport stamp is tied to the venue you scanned, not just one nearby.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Verifies you're physically at a Mother's Ruin location when you stamp your passport.</string>
 	<key>UILaunchScreen</key>

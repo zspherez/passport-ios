@@ -23,6 +23,12 @@ struct PendingCheckin: Codable, Equatable, Identifiable {
     let kind: Kind
     let token: String
     let venueId: VenueId
+    /// Per-venue QR secret captured at check-in time. Only meaningful for
+    /// `.checkin` rows; `nil` for checkouts / edits. Older rows persisted
+    /// before this field existed decode as `nil` and are dropped from the
+    /// queue rather than retried (see `flush`) since the server now requires
+    /// the token.
+    let venueQrToken: String?
     let latitude: Double?
     let longitude: Double?
     /// `.checkin`: when the user pressed Check-in (we surface this as the
@@ -40,16 +46,18 @@ struct PendingCheckin: Codable, Equatable, Identifiable {
         kind = try c.decodeIfPresent(Kind.self, forKey: .kind) ?? .checkin
         token = try c.decode(String.self, forKey: .token)
         venueId = try c.decode(VenueId.self, forKey: .venueId)
+        venueQrToken = try c.decodeIfPresent(String.self, forKey: .venueQrToken)
         latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
         longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
         observedAt = try c.decode(Date.self, forKey: .observedAt)
     }
 
-    init(id: UUID, kind: Kind, token: String, venueId: VenueId, latitude: Double?, longitude: Double?, observedAt: Date) {
+    init(id: UUID, kind: Kind, token: String, venueId: VenueId, venueQrToken: String?, latitude: Double?, longitude: Double?, observedAt: Date) {
         self.id = id
         self.kind = kind
         self.token = token
         self.venueId = venueId
+        self.venueQrToken = venueQrToken
         self.latitude = latitude
         self.longitude = longitude
         self.observedAt = observedAt
@@ -113,6 +121,7 @@ final class CheckinQueue: ObservableObject {
             kind: .checkout,
             token: token,
             venueId: venueId,
+            venueQrToken: nil,
             latitude: nil,
             longitude: nil,
             observedAt: at
@@ -126,6 +135,7 @@ final class CheckinQueue: ObservableObject {
             kind: .checkoutEdit,
             token: token,
             venueId: venueId,
+            venueQrToken: nil,
             latitude: nil,
             longitude: nil,
             observedAt: newCheckedOutAt
@@ -150,14 +160,19 @@ final class CheckinQueue: ObservableObject {
             do {
                 switch item.kind {
                 case .checkin:
-                    guard let lat = item.latitude, let lon = item.longitude else {
-                        // Corrupt row — drop to avoid blocking the queue.
+                    guard let lat = item.latitude,
+                          let lon = item.longitude,
+                          let qrToken = item.venueQrToken else {
+                        // Corrupt or pre-QR row — drop to avoid blocking the
+                        // queue. The server now requires `venueQrToken` so
+                        // there's no way to land an old (missing-token) item.
                         remove(item.id)
                         continue
                     }
                     _ = try await APIClient.checkin(CheckinRequest(
                         passportToken: item.token,
                         venueId: item.venueId,
+                        venueQrToken: qrToken,
                         latitude: lat,
                         longitude: lon
                     ))
