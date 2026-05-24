@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- Negative test: outside any venue's geofence. Use to confirm the
+     backend rejects a check-in with a "too far from venue" error. -->
+<gpx version="1.1" creator="Xcode" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="39.7392358" lon="-104.990251">
+    <name>Far Away (Denver)</name>
+  </wpt>
+</gpx>

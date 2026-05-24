@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Xcode build artifacts
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods / Carthage (unused here, but harmless)
+Pods/
+Carthage/Build/
+
+# Local override of build-time config (copy from Configuration/*.xcconfig and edit)
+Configuration/*.local.xcconfig

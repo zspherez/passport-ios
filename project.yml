@@ -1,0 +1,58 @@
+name: Passport
+options:
+  bundleIdPrefix: com.mothersruin
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+schemes:
+  Passport:
+    build:
+      targets:
+        Passport: all
+    run:
+      config: Debug
+
+targets:
+  Passport:
+    type: application
+    platform: iOS
+    configFiles:
+      Debug: Configuration/Debug.xcconfig
+      Release: Configuration/Release.xcconfig
+    sources:
+      - path: Passport
+    info:
+      path: Passport/Info.plist
+      properties:
+        CFBundleDisplayName: MRMDC Passport
+        APIBaseURL: $(API_BASE_URL)
+        WalletAPIBaseURL: $(WALLET_API_BASE_URL)
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        LSRequiresIPhoneOS: true
+        NSLocationWhenInUseUsageDescription: "Verifies you're physically at a Mother's Ruin location when you stamp your passport."
+        # Allow plaintext HTTP only to localhost so the Simulator can talk
+        # to a backend run via `npm run dev`. All other hosts still need
+        # HTTPS, matching production behavior.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+              NSIncludesSubdomains: true
+        UILaunchScreen:
+          UIColorName: ""
+        UIRequiredDeviceCapabilities:
+          - arm64
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mothersruin.passport
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_PREVIEWS: YES
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic

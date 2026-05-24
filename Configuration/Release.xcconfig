@@ -1,0 +1,9 @@
+// Release build settings for the Passport app.
+//
+// Replace `your-passport-api.example.com` / `your-wallet-api.example.com`
+// with the real production hosts before shipping a release build. See
+// Configuration/Debug.xcconfig for notes on the `$()` escape.
+
+API_BASE_URL = https:/$()/your-passport-api.example.com
+
+WALLET_API_BASE_URL = https:/$()/your-wallet-api.example.com
